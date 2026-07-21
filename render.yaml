@@ -1,0 +1,47 @@
+databases:
+  - name: obramanager-db
+    plan: free
+    databaseName: obramanager
+    user: obramanager
+    region: oregon
+
+services:
+  - type: web
+    name: obramanager-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./backend/obra-api/Dockerfile
+    dockerContext: ./backend/obra-api
+    healthCheckPath: /api/actuator/health
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: obramanager-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: obramanager-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: obramanager-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: obramanager-db
+          property: user
+      - key: DB_PASS
+        fromDatabase:
+          name: obramanager-db
+          property: password
+      - key: DB_SSLMODE
+        value: require
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FILE_UPLOAD_DIR
+        value: /app/uploads
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: 587
