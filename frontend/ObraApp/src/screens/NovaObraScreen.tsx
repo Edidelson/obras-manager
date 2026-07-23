@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Alert, ActivityIndicator, Switch,
 } from 'react-native';
+import DatePickerIncrement from '../components/DatePickerIncrement';
 import { obrasApi } from '../services/api';
 import { useObra } from '../contexts/ObraContext';
 import { paraISO, paraBR } from '../utils/date';
@@ -23,6 +24,10 @@ export default function NovaObraScreen({ navigation, route }: any) {
   const [dataPrevisao, setDataPrevisao] = useState(paraBR(obraEditando?.dataPrevisao));
   const [criarEtapasPadrao, setCriarEtapasPadrao] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Date pickers
+  const [mostrandoPickerInicio, setMostrandoPickerInicio] = useState(false);
+  const [mostrandoPickerPrevisao, setMostrandoPickerPrevisao] = useState(false);
 
   async function salvar() {
     if (!nome.trim()) { Alert.alert('Atenção', 'Informe o nome da obra.'); return; }
@@ -139,27 +144,49 @@ export default function NovaObraScreen({ navigation, route }: any) {
         <View style={styles.row2}>
           <View style={styles.half}>
             <Text style={styles.label}>Data Início</Text>
-            <TextInput
+            <TouchableOpacity
               style={styles.input}
-              value={dataInicio}
-              onChangeText={setDataInicio}
-              placeholder="DD/MM/AAAA"
-              placeholderTextColor="#475569"
-              keyboardType="numeric"
-            />
+              onPress={() => setMostrandoPickerInicio(true)}
+            >
+              <Text style={{ color: dataInicio ? '#f1f5f9' : '#475569', fontSize: 14 }}>
+                {dataInicio || 'Selecionar data'}
+              </Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.half}>
             <Text style={styles.label}>Previsão</Text>
-            <TextInput
+            <TouchableOpacity
               style={styles.input}
-              value={dataPrevisao}
-              onChangeText={setDataPrevisao}
-              placeholder="DD/MM/AAAA"
-              placeholderTextColor="#475569"
-              keyboardType="numeric"
-            />
+              onPress={() => setMostrandoPickerPrevisao(true)}
+            >
+              <Text style={{ color: dataPrevisao ? '#f1f5f9' : '#475569', fontSize: 14 }}>
+                {dataPrevisao || 'Selecionar data'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
+
+        <DatePickerIncrement
+          visible={mostrandoPickerInicio}
+          onClose={() => setMostrandoPickerInicio(false)}
+          onConfirm={(date) => {
+            setDataInicio(date);
+            setMostrandoPickerInicio(false);
+          }}
+          initialDate={dataInicio}
+          title="Data de Início"
+        />
+
+        <DatePickerIncrement
+          visible={mostrandoPickerPrevisao}
+          onClose={() => setMostrandoPickerPrevisao(false)}
+          onConfirm={(date) => {
+            setDataPrevisao(date);
+            setMostrandoPickerPrevisao(false);
+          }}
+          initialDate={dataPrevisao}
+          title="Data de Previsão"
+        />
 
         {!editando && (
           <View style={styles.switchRow}>

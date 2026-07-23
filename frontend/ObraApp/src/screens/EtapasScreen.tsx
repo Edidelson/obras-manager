@@ -108,6 +108,44 @@ export default function EtapasScreen() {
     ? etapas.reduce((acc, e) => acc + e.percentualConcluido, 0) / etapas.length
     : 0;
 
+  async function distribuirAutomatico() {
+    if (!obraAtiva || etapas.length === 0) {
+      Alert.alert('Atenção', 'Nenhuma etapa cadastrada ou obra não selecionada.');
+      return;
+    }
+    if (!obraAtiva.valorTotalPlanejado || obraAtiva.valorTotalPlanejado <= 0) {
+      Alert.alert('Atenção', 'A obra precisa ter um valor total planejado definido.');
+      return;
+    }
+    const valorPorEtapa = obraAtiva.valorTotalPlanejado / etapas.length;
+    const porcentagemPorEtapa = (100 / etapas.length).toFixed(2);
+
+    Alert.alert(
+      'Distribuir Automaticamente',
+      `Cada etapa receberá:\n\n💰 R$ ${valorPorEtapa.toFixed(2)}\n📊 ${porcentagemPorEtapa}%\n\nConfirmar?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Confirmar',
+          onPress: async () => {
+            try {
+              for (const etapa of etapas) {
+                await etapasApi.atualizar(obraAtiva.id, etapa.id, {
+                  ...etapa,
+                  valorOrcado: valorPorEtapa,
+                });
+              }
+              carregar();
+              Alert.alert('✅ Sucesso', 'Orçamento distribuído entre as etapas!');
+            } catch (e) {
+              Alert.alert('Erro', 'Não foi possível distribuir o orçamento.');
+            }
+          },
+        },
+      ]
+    );
+  }
+
   const renderItem = ({ item }: { item: Etapa }) => {
     const cor = STATUS_COLORS[item.status] ?? '#64748b';
     return (
@@ -148,9 +186,14 @@ export default function EtapasScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>📋 Etapas da Obra</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={() => setNovaVisible(true)}>
-          <Text style={styles.addBtnText}>+ Nova Etapa</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity style={styles.autoBtn} onPress={distribuirAutomatico}>
+            <Text style={styles.autoBtnText}>⚡ Distribuir</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.addBtn} onPress={() => setNovaVisible(true)}>
+            <Text style={styles.addBtnText}>+ Nova</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Progresso geral */}
@@ -274,6 +317,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6, borderWidth: 1, borderColor: '#f97316',
   },
   addBtnText: { color: '#f97316', fontSize: 12, fontWeight: '700' },
+  autoBtn: {
+    backgroundColor: '#064e3b', borderRadius: 99, paddingHorizontal: 12,
+    paddingVertical: 6, borderWidth: 1, borderColor: '#10b981',
+  },
+  autoBtnText: { color: '#10b981', fontSize: 12, fontWeight: '700' },
   progGeral: { margin: 16, backgroundColor: '#1e293b', borderRadius: 12, padding: 14 },
   progGeralLabel: { fontSize: 12, color: '#94a3b8', fontWeight: '600', marginBottom: 4 },
   progGeralPct: { fontSize: 22, fontWeight: '800', color: '#f97316', marginBottom: 8 },
