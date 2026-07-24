@@ -1,11 +1,8 @@
 import axios, { AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Dev: emulador Android acessa o host via 10.0.2.2 (API local + docker-compose).
-// Release (build pro Firebase App Distribution etc.): usa a API hospedada no Render.
-const BASE_URL = __DEV__
-  ? 'http://192.168.18.14:8080/api'
-  : 'https://obramanager-api.onrender.com/api';
+// Dev e Release: ambos usam API do Render (que conecta ao Neon)
+const BASE_URL = 'https://obramanager-api.onrender.com/api';
 
 export const api = axios.create({
   baseURL: BASE_URL,
