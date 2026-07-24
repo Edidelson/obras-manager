@@ -3,9 +3,9 @@ spring:
     name: obra-api
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:sakura.proxy.rlwy.net}:${DB_PORT:23451}/${DB_NAME:railway}?sslmode=${DB_SSLMODE:require}
+    url: jdbc:postgresql://${DB_HOST:wnawmkvdigwigepeenru.supabase.co}:${DB_PORT:5432}/${DB_NAME:postgres}?sslmode=${DB_SSLMODE:require}
     username: ${DB_USER:postgres}
-    password: ${DB_PASS:xdhyQUzc1xicUztFJCnmkz7JMsoJzJGf}
+    password: ${DB_PASS:a2YxxoZRILDFpkkC}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
