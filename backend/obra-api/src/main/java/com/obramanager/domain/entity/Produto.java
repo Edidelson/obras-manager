@@ -55,6 +55,9 @@ public class Produto {
     @Column(name = "atualizado_em")
     private LocalDateTime atualizadoEm;
 
+    @Column(name = "imagem_url", length = 500)
+    private String imagemUrl;
+
     @PrePersist
     void prePersist() { criadoEm = LocalDateTime.now(); atualizadoEm = LocalDateTime.now(); }
     @PreUpdate

@@ -38,3 +38,6 @@ management:
   health:
     mail:
       enabled: false
+
+unsplash:
+  api-key: ${UNSPLASH_API_KEY:CccGWeLWtJZclrKzmtLvZ0VH1R-hpMAYjMlfIFuvBU0}
