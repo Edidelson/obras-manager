@@ -1,8 +1,10 @@
 import axios, { AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Dev e Release: ambos usam API do Render (que conecta ao Neon)
-const BASE_URL = 'https://obramanager-api.onrender.com/api';
+// Automático: Dev (emulador) usa localhost, Release (produção) usa Render
+const BASE_URL = __DEV__
+  ? 'http://10.0.2.2:8080/api'
+  : 'https://obramanager-api.onrender.com/api';
 
 export const api = axios.create({
   baseURL: BASE_URL,

@@ -17,6 +17,18 @@ interface Produto {
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v ?? 0);
 
+// Mapa de emojis por categoria
+const emojiPorCategoria: { [key: string]: string } = {
+  'Materiais': '🧱',
+  'Mão de Obra': '👷',
+  'Elétrica': '⚡',
+  'Hidráulica': '💧',
+  'Acabamento': '🎨',
+  'Cobertura': '🏠',
+  'Fundação': '🏗️',
+  'Ferramentas': '🔧',
+};
+
 export default function ProdutosScreen({ navigation, route }: any) {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [busca, setBusca] = useState('');
@@ -59,7 +71,9 @@ export default function ProdutosScreen({ navigation, route }: any) {
       >
         <View style={styles.row}>
           <View style={styles.iconBox}>
-            <Text style={styles.icon}>{item.categoria?.icone ?? '📦'}</Text>
+            <Text style={styles.icon}>
+              {item.categoria?.nome ? emojiPorCategoria[item.categoria.nome] : '📦'}
+            </Text>
           </View>
           <View style={styles.info}>
             <Text style={styles.nome}>{item.nome}</Text>

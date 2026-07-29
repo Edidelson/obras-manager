@@ -41,10 +41,4 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
         WHERE p.categoria.id = :categoriaId AND p.ativo = true
     """)
     List<Produto> findByCategoriaIdAndAtivoTrue(@Param("categoriaId") Long categoriaId);
-
-    @Query("""
-        SELECT p FROM Produto p LEFT JOIN FETCH p.categoria
-        WHERE p.imagemUrl IS NULL
-    """)
-    List<Produto> findByImagemUrlIsNull();
 }
