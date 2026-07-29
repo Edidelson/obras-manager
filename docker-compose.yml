@@ -32,12 +32,13 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: obramanager
       DB_USER: postgres
       DB_PASS: postgres
-      JWT_SECRET: mude-este-segredo-em-producao-use-32chars
+      JWT_SECRET: dev-local-secret-key-only-for-testing-12345
       FILE_UPLOAD_DIR: /app/uploads
     ports:
       - "8080:8080"

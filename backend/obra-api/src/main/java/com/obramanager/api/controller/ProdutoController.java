@@ -30,9 +30,14 @@ public class ProdutoController {
 
     @GetMapping
     @Operation(summary = "Listar produtos (compartilhados entre todos os usuários)")
-    public List<Produto> listar(@RequestParam(required = false) String busca) {
+    public List<Produto> listar(
+            @RequestParam(required = false) String busca,
+            @RequestParam(required = false) Long categoriaId) {
         if (busca != null && !busca.isBlank()) {
             return produtoRepository.buscar(busca);
+        }
+        if (categoriaId != null) {
+            return produtoRepository.findByCategoriaIdAndAtivoTrue(categoriaId);
         }
         return produtoRepository.findByAtivoTrueOrderByNomeAsc();
     }
