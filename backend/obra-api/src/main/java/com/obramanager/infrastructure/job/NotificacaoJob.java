@@ -30,10 +30,29 @@ public class NotificacaoJob {
     private final EmailService emailService;
 
     /**
-     * Verifica às 8h da manhã se há obras atrasadas
+     * Verifica às 8h da manhã se orçamento foi excedido
+     */
+    /**
+     * Verifica às 8h da manhã todas as notificações
      */
     @Scheduled(cron = "0 0 8 * * *")
-    public void verificarObrasAtrasadas() {
+    public void verificarNotificacoes8h() {
+        log.info("🔔 Verificando notificações às 8h...");
+        verificarObrasAtrasadas();
+        verificarValorExcedido();
+    }
+
+    /**
+     * Verifica às 16h (4 da tarde) todas as notificações
+     */
+    @Scheduled(cron = "0 0 16 * * *")
+    public void verificarNotificacoes16h() {
+        log.info("🔔 Verificando notificações às 16h...");
+        verificarObrasAtrasadas();
+        verificarValorExcedido();
+    }
+
+    private void verificarObrasAtrasadas() {
         log.info("⏰ Verificando obras atrasadas...");
 
         try {
@@ -64,11 +83,7 @@ public class NotificacaoJob {
         }
     }
 
-    /**
-     * Verifica às 16h (4 da tarde) se orçamento foi excedido
-     */
-    @Scheduled(cron = "0 0 16 * * *")
-    public void verificarValorExcedido() {
+    private void verificarValorExcedido() {
         log.info("💰 Verificando valores excedidos...");
 
         try {

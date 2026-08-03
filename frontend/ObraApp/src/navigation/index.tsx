@@ -47,6 +47,7 @@ function MainTabs() {
             Produtos: 'cube',
             Notificacoes: 'notifications',
             Fornecedores: 'storefront',
+            Mais: 'ellipsis-horizontal',
           };
           return <Icon name={icons[route.name] ?? 'circle'} size={size} color={color} />;
         },
@@ -57,6 +58,7 @@ function MainTabs() {
       <Tab.Screen name="Produtos" component={ProdutosScreen} />
       <Tab.Screen name="Notificacoes" component={NotificacoesScreen} />
       <Tab.Screen name="Fornecedores" component={FornecedoresScreen} />
+      <Tab.Screen name="Mais" component={EtapasScreen} />
     </Tab.Navigator>
   );
 }
