@@ -1,9 +1,11 @@
 package com.obramanager.infrastructure.job;
 
+import com.obramanager.domain.entity.JobExecucao;
 import com.obramanager.domain.entity.Notificacao;
 import com.obramanager.domain.entity.Obra;
 import com.obramanager.domain.entity.Orcamento;
 import com.obramanager.domain.entity.Usuario;
+import com.obramanager.domain.repository.JobExecucaoRepository;
 import com.obramanager.domain.repository.NotificacaoRepository;
 import com.obramanager.domain.repository.ObraRepository;
 import com.obramanager.domain.repository.OrcamentoRepository;
@@ -27,6 +29,7 @@ public class NotificacaoJob {
     private final ObraRepository obraRepository;
     private final OrcamentoRepository orcamentoRepository;
     private final NotificacaoRepository notificacaoRepository;
+    private final JobExecucaoRepository jobExecucaoRepository;
     private final EmailService emailService;
 
     /**
@@ -37,9 +40,26 @@ public class NotificacaoJob {
      */
     @Scheduled(cron = "0 0 8 * * *")
     public void verificarNotificacoes8h() {
+        long inicio = System.currentTimeMillis();
+        int notificacoes = 0;
+        String status = "SUCESSO";
+        String mensagem = "Verificação concluída";
+
         log.info("🔔 Verificando notificações às 8h...");
-        verificarObrasAtrasadas();
-        verificarValorExcedido();
+
+        try {
+            int atrasadas = verificarObrasAtrasadas();
+            int excedidas = verificarValorExcedido();
+            notificacoes = atrasadas + excedidas;
+            mensagem = String.format("Atrasadas: %d, Valor excedido: %d", atrasadas, excedidas);
+        } catch (Exception e) {
+            status = "ERRO";
+            mensagem = e.getMessage();
+            log.error("❌ Erro ao verificar notificações às 8h: {}", e.getMessage());
+        } finally {
+            long tempoExec = System.currentTimeMillis() - inicio;
+            registrarExecucao("verificarNotificacoes8h", status, mensagem, notificacoes, tempoExec);
+        }
     }
 
     /**
@@ -47,13 +67,31 @@ public class NotificacaoJob {
      */
     @Scheduled(cron = "0 0 16 * * *")
     public void verificarNotificacoes16h() {
+        long inicio = System.currentTimeMillis();
+        int notificacoes = 0;
+        String status = "SUCESSO";
+        String mensagem = "Verificação concluída";
+
         log.info("🔔 Verificando notificações às 16h...");
-        verificarObrasAtrasadas();
-        verificarValorExcedido();
+
+        try {
+            int atrasadas = verificarObrasAtrasadas();
+            int excedidas = verificarValorExcedido();
+            notificacoes = atrasadas + excedidas;
+            mensagem = String.format("Atrasadas: %d, Valor excedido: %d", atrasadas, excedidas);
+        } catch (Exception e) {
+            status = "ERRO";
+            mensagem = e.getMessage();
+            log.error("❌ Erro ao verificar notificações às 16h: {}", e.getMessage());
+        } finally {
+            long tempoExec = System.currentTimeMillis() - inicio;
+            registrarExecucao("verificarNotificacoes16h", status, mensagem, notificacoes, tempoExec);
+        }
     }
 
-    private void verificarObrasAtrasadas() {
+    private int verificarObrasAtrasadas() {
         log.info("⏰ Verificando obras atrasadas...");
+        int notificacoesCriadas = 0;
 
         try {
             List<Obra> obras = obraRepository.findAll();
@@ -72,19 +110,23 @@ public class NotificacaoJob {
 
                     if (!jaNotificado) {
                         criarNotificacaoAtrasada(obra, (int) diasAtrasado);
+                        notificacoesCriadas++;
                     }
                 }
             }
 
-            log.info("✅ Verificação de obras atrasadas concluída");
+            log.info("✅ Verificação de obras atrasadas concluída ({})", notificacoesCriadas);
 
         } catch (Exception e) {
             log.error("❌ Erro ao verificar obras atrasadas: {}", e.getMessage());
         }
+
+        return notificacoesCriadas;
     }
 
-    private void verificarValorExcedido() {
+    private int verificarValorExcedido() {
         log.info("💰 Verificando valores excedidos...");
+        int notificacoesCriadas = 0;
 
         try {
             List<Obra> obras = obraRepository.findAll();
@@ -106,16 +148,19 @@ public class NotificacaoJob {
 
                         if (!jaNotificado) {
                             criarNotificacaoValorExcedido(obra, orcamento);
+                            notificacoesCriadas++;
                         }
                     }
                 }
             }
 
-            log.info("✅ Verificação de valores concluída");
+            log.info("✅ Verificação de valores concluída ({})", notificacoesCriadas);
 
         } catch (Exception e) {
             log.error("❌ Erro ao verificar valores: {}", e.getMessage());
         }
+
+        return notificacoesCriadas;
     }
 
     // ─────────────── Helpers ───────────────
@@ -166,5 +211,23 @@ public class NotificacaoJob {
         }
 
         log.info("📢 Notificação criada: Valor excedido - {}", obra.getNome());
+    }
+
+    private void registrarExecucao(String nomeJob, String status, String mensagem, int quantidadeNotif, long tempoExecMs) {
+        try {
+            JobExecucao execucao = JobExecucao.builder()
+                    .nomeJob(nomeJob)
+                    .status(status)
+                    .mensagem(mensagem)
+                    .quantidadeNotif(quantidadeNotif)
+                    .tempoExecMs(tempoExecMs)
+                    .build();
+
+            jobExecucaoRepository.save(execucao);
+            log.info("✅ Execução registrada: {} ({}) - {} ms", nomeJob, status, tempoExecMs);
+
+        } catch (Exception e) {
+            log.error("❌ Erro ao registrar execução do job: {}", e.getMessage());
+        }
     }
 }
