@@ -36,16 +36,16 @@ public class NotificacaoJob {
      * Verifica às 8h da manhã se orçamento foi excedido
      */
     /**
-     * Verifica às 8h da manhã todas as notificações
+     * Verifica a cada 5 minutos (teste)
      */
-    @Scheduled(cron = "0 0 8 * * *")
+    @Scheduled(cron = "0 */5 * * * *")
     public void verificarNotificacoes8h() {
         long inicio = System.currentTimeMillis();
         int notificacoes = 0;
         String status = "SUCESSO";
         String mensagem = "Verificação concluída";
 
-        log.info("🔔 Verificando notificações às 8h...");
+        log.info("🔔 [TESTE] Verificando notificações (5min)...");
 
         try {
             int atrasadas = verificarObrasAtrasadas();
@@ -55,7 +55,7 @@ public class NotificacaoJob {
         } catch (Exception e) {
             status = "ERRO";
             mensagem = e.getMessage();
-            log.error("❌ Erro ao verificar notificações às 8h: {}", e.getMessage());
+            log.error("❌ Erro ao verificar notificações: {}", e.getMessage());
         } finally {
             long tempoExec = System.currentTimeMillis() - inicio;
             registrarExecucao("verificarNotificacoes8h", status, mensagem, notificacoes, tempoExec);
@@ -63,16 +63,16 @@ public class NotificacaoJob {
     }
 
     /**
-     * Verifica às 16h (4 da tarde) todas as notificações
+     * Verifica a cada 5 minutos (teste)
      */
-    @Scheduled(cron = "0 0 16 * * *")
+    @Scheduled(cron = "0 */5 * * * *")
     public void verificarNotificacoes16h() {
         long inicio = System.currentTimeMillis();
         int notificacoes = 0;
         String status = "SUCESSO";
         String mensagem = "Verificação concluída";
 
-        log.info("🔔 Verificando notificações às 16h...");
+        log.info("🔔 [TESTE] Verificando notificações (5min)...");
 
         try {
             int atrasadas = verificarObrasAtrasadas();
@@ -82,7 +82,7 @@ public class NotificacaoJob {
         } catch (Exception e) {
             status = "ERRO";
             mensagem = e.getMessage();
-            log.error("❌ Erro ao verificar notificações às 16h: {}", e.getMessage());
+            log.error("❌ Erro ao verificar notificações: {}", e.getMessage());
         } finally {
             long tempoExec = System.currentTimeMillis() - inicio;
             registrarExecucao("verificarNotificacoes16h", status, mensagem, notificacoes, tempoExec);
