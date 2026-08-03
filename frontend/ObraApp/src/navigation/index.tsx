@@ -25,6 +25,7 @@ import NovaObraScreen from '../screens/NovaObraScreen';
 import NovoFornecedorScreen from '../screens/NovoFornecedorScreen';
 import NovoProdutoScreen from '../screens/NovoProdutoScreen';
 import NovaCotacaoScreen from '../screens/NovaCotacaoScreen';
+import NotificacoesScreen from '../screens/NotificacoesScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -44,8 +45,8 @@ function MainTabs() {
             Dashboard: 'bar-chart',
             Compras: 'cart',
             Produtos: 'cube',
+            Notificacoes: 'notifications',
             Fornecedores: 'storefront',
-            Mais: 'ellipsis-horizontal',
           };
           return <Icon name={icons[route.name] ?? 'circle'} size={size} color={color} />;
         },
@@ -54,8 +55,8 @@ function MainTabs() {
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Compras" component={ComprasScreen} />
       <Tab.Screen name="Produtos" component={ProdutosScreen} />
+      <Tab.Screen name="Notificacoes" component={NotificacoesScreen} />
       <Tab.Screen name="Fornecedores" component={FornecedoresScreen} />
-      <Tab.Screen name="Mais" component={EtapasScreen} />
     </Tab.Navigator>
   );
 }

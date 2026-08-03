@@ -110,3 +110,17 @@ export const orcamentoApi = {
   buscar: (obraId: number) => api.get(`/obras/${obraId}/orcamento`),
   atualizar: (obraId: number, data: any) => api.put(`/obras/${obraId}/orcamento`, data),
 };
+
+// ─────────────── Notificações ───────────────
+export const notificacoesApi = {
+  listarPorObra: (obraId: number) => api.get(`/notificacoes/obra/${obraId}`),
+  listarNaoLidas: (obraId: number) => api.get(`/notificacoes/obra/${obraId}/nao-lidas`),
+  contarNaoLidas: (obraId: number) => api.get(`/notificacoes/obra/${obraId}/contagem-nao-lidas`),
+  marcarComoLida: (id: number) => api.put(`/notificacoes/${id}/marcar-como-lida`),
+  deletar: (id: number) => api.delete(`/notificacoes/${id}`),
+};
+
+// ─────────────── Relatório ───────────────
+export const relatorioApi = {
+  gerarDados: (obraId: number) => api.get(`/obras/${obraId}/relatorio`),
+};

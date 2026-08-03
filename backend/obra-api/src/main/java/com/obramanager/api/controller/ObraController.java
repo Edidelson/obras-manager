@@ -7,6 +7,7 @@ import com.obramanager.application.dto.response.ObraResponse;
 import com.obramanager.application.dto.response.OrcamentoResponse;
 import com.obramanager.application.service.ObraService;
 import com.obramanager.application.service.OrcamentoService;
+import com.obramanager.application.service.RelatorioPDFService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/obras")
@@ -26,6 +28,7 @@ public class ObraController {
 
     private final ObraService obraService;
     private final OrcamentoService orcamentoService;
+    private final RelatorioPDFService relatorioPDFService;
 
     @GetMapping
     @Operation(summary = "Listar obras do usuário logado")
@@ -75,5 +78,11 @@ public class ObraController {
     @Operation(summary = "Atualizar orçamento planejado da obra")
     public OrcamentoResponse atualizarOrcamento(@PathVariable Long id, @Valid @RequestBody OrcamentoRequest req) {
         return orcamentoService.atualizar(id, req);
+    }
+
+    @GetMapping("/{id}/relatorio")
+    @Operation(summary = "Gerar dados para relatório PDF da obra")
+    public Map<String, Object> gerarRelatorio(@PathVariable Long id) {
+        return relatorioPDFService.gerarDadosRelatorio(id);
     }
 }

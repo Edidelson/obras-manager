@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
-import { orcamentoApi, obrasApi } from '../services/api';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, Linking } from 'react-native';
+import { orcamentoApi, obrasApi, relatorioApi } from '../services/api';
 import { useObra } from '../contexts/ObraContext';
 
 const fmt = (v: number) =>
@@ -32,6 +32,7 @@ export default function OrcamentoScreen({ navigation }: any) {
   const [dash, setDash] = useState<DashData | null>(null);
   const [salvando, setSalvando] = useState<CategoriaKey | null>(null);
   const [salvandoTotal, setSalvandoTotal] = useState(false);
+  const [exportandoPDF, setExportandoPDF] = useState(false);
 
   useEffect(() => {
     if (!obraAtiva) return;
@@ -128,11 +129,115 @@ export default function OrcamentoScreen({ navigation }: any) {
     );
   }
 
+  async function exportarPDF() {
+    if (!obraAtiva) return;
+
+    try {
+      setExportandoPDF(true);
+      const { data } = await relatorioApi.gerarDados(obraAtiva.id);
+
+      // Criar conteúdo HTML do relatório
+      const html = `
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>${data.nomeObra}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+              h1 { color: #f97316; }
+              .info { margin: 10px 0; }
+              .label { font-weight: bold; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f97316; color: white; }
+            </style>
+          </head>
+          <body>
+            <h1>📋 Relatório da Obra</h1>
+            <div class="info">
+              <span class="label">Obra:</span> ${data.nomeObra}
+            </div>
+            <div class="info">
+              <span class="label">Endereço:</span> ${data.endereco || 'N/A'}
+            </div>
+            <div class="info">
+              <span class="label">Data Início:</span> ${data.dataInicio || 'N/A'}
+            </div>
+            <div class="info">
+              <span class="label">Previsão:</span> ${data.dataPrevisao || 'N/A'}
+            </div>
+            <div class="info">
+              <span class="label">Status:</span> ${data.status || 'N/A'}
+            </div>
+            <table>
+              <tr>
+                <th>Categoria</th>
+                <th>Valor</th>
+              </tr>
+              <tr>
+                <td>Orçamento Total</td>
+                <td>R$ ${(data.valorTotal || 0).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>Materiais</td>
+                <td>R$ ${(data.matMateriais || 0).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>Mão de Obra</td>
+                <td>R$ ${(data.matMaoObra || 0).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>Elétrica</td>
+                <td>R$ ${(data.matEletrica || 0).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>Hidráulica</td>
+                <td>R$ ${(data.matHidraulica || 0).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>Acabamento</td>
+                <td>R$ ${(data.matAcabamento || 0).toFixed(2)}</td>
+              </tr>
+            </table>
+            <p style="margin-top: 30px; font-size: 12px; color: #999;">
+              Gerado em: ${data.dataPDF}
+            </p>
+          </body>
+        </html>
+      `;
+
+      // Abre o email com attachment (simulado no compartilhamento)
+      const subject = `Relatório - ${data.nomeObra}`;
+      const body = `Segue em anexo o relatório da obra ${data.nomeObra}.\n\nOrçamento Total: R$ ${(data.valorTotal || 0).toFixed(2)}`;
+
+      const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      await Linking.openURL(mailtoUrl);
+
+      Alert.alert('Sucesso', 'Abrindo cliente de email para enviar relatório...');
+    } catch (e) {
+      console.error('Erro ao exportar PDF:', e);
+      Alert.alert('Erro', 'Não foi possível gerar o relatório.');
+    } finally {
+      setExportandoPDF(false);
+    }
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.back} onPress={() => navigation.goBack()}>←</Text>
         <Text style={styles.title}>💰 Orçamento</Text>
+        <TouchableOpacity
+          style={styles.pdfBtn}
+          disabled={exportandoPDF}
+          onPress={exportarPDF}
+        >
+          {exportandoPDF ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.pdfText}>📥 PDF</Text>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Card total */}
@@ -189,11 +294,16 @@ export default function OrcamentoScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0f172a' },
   header: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: '#1e293b', padding: 16, paddingTop: 48,
   },
   back: { color: '#f97316', fontSize: 24, fontWeight: '700' },
-  title: { fontSize: 15, fontWeight: '700', color: '#f1f5f9' },
+  title: { fontSize: 15, fontWeight: '700', color: '#f1f5f9', flex: 1, marginLeft: 12 },
+  pdfBtn: {
+    backgroundColor: '#f97316', paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 6, justifyContent: 'center', alignItems: 'center',
+  },
+  pdfText: { color: '#fff', fontWeight: '600', fontSize: 12 },
   totalCard: {
     margin: 16,
     background: 'linear-gradient(135deg, #431407, #1a0a00)',
