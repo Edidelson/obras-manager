@@ -3,7 +3,7 @@
 -- V7__criar_notificacoes.sql
 -- ============================================================
 
-CREATE TABLE notificacoes (
+CREATE TABLE IF NOT EXISTS notificacoes (
     id              BIGSERIAL PRIMARY KEY,
     obra_id         BIGINT        NOT NULL REFERENCES obras(id) ON DELETE CASCADE,
     tipo            VARCHAR(50)   NOT NULL, -- 'ATRASADA', 'VALOR_EXCEDIDO', 'PRODUTO_FALTANDO'
@@ -15,6 +15,6 @@ CREATE TABLE notificacoes (
 );
 
 -- Índices para melhor performance
-CREATE INDEX idx_notificacoes_obra ON notificacoes(obra_id);
-CREATE INDEX idx_notificacoes_lida ON notificacoes(lida);
-CREATE INDEX idx_notificacoes_criada ON notificacoes(criada_em);
+CREATE INDEX IF NOT EXISTS idx_notificacoes_obra ON notificacoes(obra_id);
+CREATE INDEX IF NOT EXISTS idx_notificacoes_lida ON notificacoes(lida);
+CREATE INDEX IF NOT EXISTS idx_notificacoes_criada ON notificacoes(criada_em);

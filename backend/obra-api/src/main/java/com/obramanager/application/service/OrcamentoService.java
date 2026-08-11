@@ -55,11 +55,6 @@ public class OrcamentoService {
         orcamento.setMatAcabamento(req.matAcabamento());
         orcamentoRepository.save(orcamento);
 
-        // Mantém a obra e o orçamento consistentes — o dashboard e outras
-        // telas usam obra.valorTotalPlanejado como referência do total.
-        obra.setValorTotalPlanejado(req.valorTotal());
-        obraRepository.save(obra);
-
         var gastoPorCategoria = calcularGastoPorCategoria(obraId);
         return toResponse(orcamento, gastoPorCategoria);
     }

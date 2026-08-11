@@ -1,0 +1,1 @@
+-- V14 - Descontinuada (lógica movida para V12)

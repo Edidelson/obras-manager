@@ -1,5 +1,8 @@
+// ARQUIVO DESABILITADO - Funcionalidade de Unsplash removida
+// Usar emoji illustrations em ProdutosScreen.tsx ao invés de imagens da API
 package com.obramanager.infrastructure.loader;
 
+/*
 import com.obramanager.domain.entity.Produto;
 import com.obramanager.domain.repository.ProdutoRepository;
 import com.obramanager.infrastructure.external.UnsplashService;
@@ -14,7 +17,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile("!test") // Não executa em testes
+@Profile("!test")
 public class ProdutoImagemLoader implements CommandLineRunner {
 
     private final ProdutoRepository produtoRepository;
@@ -24,7 +27,6 @@ public class ProdutoImagemLoader implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info("🖼️ Iniciando carregamento de imagens dos produtos...");
 
-        // Buscar todos os produtos sem imagem
         List<Produto> produtosSemImagem = produtoRepository.findByImagemUrlIsNull();
 
         if (produtosSemImagem.isEmpty()) {
@@ -54,7 +56,6 @@ public class ProdutoImagemLoader implements CommandLineRunner {
                     log.warn("⚠️ Sem imagem encontrada para: {}", produto.getNome());
                 }
 
-                // Rate limit: esperar um pouco entre requisições pra não sobrecarregar a API
                 Thread.sleep(100);
 
             } catch (InterruptedException e) {
@@ -71,3 +72,4 @@ public class ProdutoImagemLoader implements CommandLineRunner {
         log.info("   ✅ Sucessos: {} | ⚠️ Falhas: {}", sucessos, falhas);
     }
 }
+*/

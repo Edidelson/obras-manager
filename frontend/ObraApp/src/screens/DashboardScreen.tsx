@@ -54,6 +54,17 @@ export default function DashboardScreen({ navigation }: any) {
 
   useEffect(() => { carregar(); }, [carregar]);
 
+  // Mostrar alerta quando o valor restante ficar negativo
+  useEffect(() => {
+    if (dashboard && dashboard.valorRestante < 0) {
+      Alert.alert(
+        '⚠️ Limite Excedido',
+        `O orçamento foi excedido em R$ ${Math.abs(dashboard.valorRestante).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        [{ text: 'OK' }]
+      );
+    }
+  }, [dashboard?.valorRestante]);
+
   const onRefresh = () => { setRefreshing(true); carregar(); };
 
   if (loading) {
@@ -66,6 +77,9 @@ export default function DashboardScreen({ navigation }: any) {
 
   const pctNum = dashboard?.percentualConsumido ?? 0;
   const pctColor = pctNum >= 90 ? '#ef4444' : pctNum >= 70 ? '#eab308' : '#22c55e';
+
+  // Cor vermelha quando o valor restante é negativo
+  const restanteColor = (dashboard?.valorRestante ?? 0) < 0 ? '#ef4444' : '#22c55e';
 
   return (
     <ScrollView
@@ -101,7 +115,7 @@ export default function DashboardScreen({ navigation }: any) {
       <View style={styles.kpiRow}>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiLabel}>Restante</Text>
-          <Text style={[styles.kpiValue, { color: '#22c55e' }]}>{fmt(dashboard?.valorRestante ?? 0)}</Text>
+          <Text style={[styles.kpiValue, { color: restanteColor }]}>{fmt(dashboard?.valorRestante ?? 0)}</Text>
         </View>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiLabel}>Compras</Text>

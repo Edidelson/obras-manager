@@ -17,6 +17,10 @@ public class Notificacao {
     @JoinColumn(name = "obra_id", nullable = false)
     private Obra obra;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
+
     @Column(nullable = false, length = 50)
     private String tipo; // ATRASADA, VALOR_EXCEDIDO, PRODUTO_FALTANDO
 

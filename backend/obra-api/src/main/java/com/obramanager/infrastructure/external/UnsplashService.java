@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Optional;
 
-@Service
+// @Service // DESABILITADO - Funcionalidade de Unsplash removida
 @RequiredArgsConstructor
 @Slf4j
 public class UnsplashService {

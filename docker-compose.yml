@@ -14,7 +14,7 @@ services:
     ports:
       - "5434:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata_v2:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d obramanager"]
       interval: 10s
@@ -66,5 +66,5 @@ services:
       - dev
 
 volumes:
-  pgdata:
+  pgdata_v2:
   uploads:

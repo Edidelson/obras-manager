@@ -18,6 +18,9 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Component
@@ -33,19 +36,16 @@ public class NotificacaoJob {
     private final EmailService emailService;
 
     /**
-     * Verifica às 8h da manhã se orçamento foi excedido
+     * Verifica às 8h da manhã
      */
-    /**
-     * Verifica a cada 5 minutos (teste)
-     */
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 0 8 * * *")
     public void verificarNotificacoes8h() {
         long inicio = System.currentTimeMillis();
         int notificacoes = 0;
         String status = "SUCESSO";
         String mensagem = "Verificação concluída";
 
-        log.info("🔔 [TESTE] Verificando notificações (5min)...");
+        log.info("🔔 Verificando notificações...");
 
         try {
             int atrasadas = verificarObrasAtrasadas();
@@ -63,16 +63,16 @@ public class NotificacaoJob {
     }
 
     /**
-     * Verifica a cada 5 minutos (teste)
+     * Verifica às 16h (4 da tarde)
      */
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 0 16 * * *")
     public void verificarNotificacoes16h() {
         long inicio = System.currentTimeMillis();
         int notificacoes = 0;
         String status = "SUCESSO";
         String mensagem = "Verificação concluída";
 
-        log.info("🔔 [TESTE] Verificando notificações (5min)...");
+        log.info("🔔 Verificando notificações...");
 
         try {
             int atrasadas = verificarObrasAtrasadas();
@@ -95,30 +95,42 @@ public class NotificacaoJob {
 
         try {
             List<Obra> obras = obraRepository.findAll();
+            log.info("📊 Total de obras: {}", obras.size());
 
             for (Obra obra : obras) {
+                log.info("🔍 Obra: {} - DataPrevisao: {}", obra.getNome(), obra.getDataPrevisao());
+
                 if (obra.getDataPrevisao() != null && obra.getDataPrevisao().isBefore(LocalDate.now())) {
                     // Obra está atrasada
                     long diasAtrasado = java.time.temporal.ChronoUnit.DAYS
                             .between(obra.getDataPrevisao(), LocalDate.now());
 
+                    log.info("⚠️ Obra ATRASADA: {} ({} dias)", obra.getNome(), diasAtrasado);
+
                     // Verifica se já notificou hoje
-                    boolean jaNotificado = notificacaoRepository
-                            .findByObraId(obra.getId()).stream()
+                    List<Notificacao> notifsExistentes = notificacaoRepository.findByObraId(obra.getId());
+                    log.info("📋 Notificações existentes: {}", notifsExistentes.size());
+
+                    boolean jaNotificado = notifsExistentes.stream()
                             .anyMatch(n -> n.getTipo().equals("ATRASADA") &&
                                     n.getCriadaEm().toLocalDate().equals(LocalDate.now()));
 
+                    log.info("✅ Já notificado hoje? {}", jaNotificado);
+
                     if (!jaNotificado) {
+                        log.info("📧 CRIANDO notificação para: {}", obra.getNome());
                         criarNotificacaoAtrasada(obra, (int) diasAtrasado);
                         notificacoesCriadas++;
                     }
+                } else {
+                    log.debug("❌ Obra NÃO atrasada: {}", obra.getNome());
                 }
             }
 
-            log.info("✅ Verificação de obras atrasadas concluída ({})", notificacoesCriadas);
+            log.info("✅ Verificação de obras atrasadas concluída ({} notificações criadas)", notificacoesCriadas);
 
         } catch (Exception e) {
-            log.error("❌ Erro ao verificar obras atrasadas: {}", e.getMessage());
+            log.error("❌ Erro ao verificar obras atrasadas: {}", e.getMessage(), e);
         }
 
         return notificacoesCriadas;
@@ -130,23 +142,34 @@ public class NotificacaoJob {
 
         try {
             List<Obra> obras = obraRepository.findAll();
+            log.info("📊 Total de obras: {}", obras.size());
 
             for (Obra obra : obras) {
+                log.info("🔍 Obra: {} - ValorPlanejado: {}", obra.getNome(), obra.getValorTotalPlanejado());
+
                 Orcamento orcamento = orcamentoRepository.findByObraId(obra.getId())
                         .orElse(null);
+
+                log.info("📋 Orçamento encontrado: {}", orcamento != null ? orcamento.getValorTotal() : "NENHUM");
 
                 if (orcamento != null &&
                         orcamento.getValorTotal().compareTo(BigDecimal.ZERO) > 0 &&
                         obra.getValorTotalPlanejado() != null) {
 
+                    log.info("💵 Comparando: {} > {} ?", orcamento.getValorTotal(), obra.getValorTotalPlanejado());
+
                     if (orcamento.getValorTotal().compareTo(obra.getValorTotalPlanejado()) > 0) {
+                        log.info("⚠️ EXCEDIDO: {}", obra.getNome());
                         // Orçamento excedido
                         boolean jaNotificado = notificacaoRepository
                                 .findByObraId(obra.getId()).stream()
                                 .anyMatch(n -> n.getTipo().equals("VALOR_EXCEDIDO") &&
                                         n.getCriadaEm().toLocalDate().equals(LocalDate.now()));
 
+                        log.info("✅ Já notificado hoje? {}", jaNotificado);
+
                         if (!jaNotificado) {
+                            log.info("📧 CRIANDO notificação para: {}", obra.getNome());
                             criarNotificacaoValorExcedido(obra, orcamento);
                             notificacoesCriadas++;
                         }
@@ -168,6 +191,7 @@ public class NotificacaoJob {
     private void criarNotificacaoAtrasada(Obra obra, int diasAtrasado) {
         Notificacao notif = Notificacao.builder()
                 .obra(obra)
+                .usuario(obra.getUsuario())
                 .tipo("ATRASADA")
                 .titulo("⏰ Obra Atrasada")
                 .mensagem(String.format("A obra '%s' está %d dias atrasada!", obra.getNome(), diasAtrasado))
@@ -191,6 +215,7 @@ public class NotificacaoJob {
     private void criarNotificacaoValorExcedido(Obra obra, Orcamento orcamento) {
         Notificacao notif = Notificacao.builder()
                 .obra(obra)
+                .usuario(obra.getUsuario())
                 .tipo("VALOR_EXCEDIDO")
                 .titulo("💰 Orçamento Excedido")
                 .mensagem(String.format("O orçamento foi excedido em R$ %.2f",
@@ -215,16 +240,21 @@ public class NotificacaoJob {
 
     private void registrarExecucao(String nomeJob, String status, String mensagem, int quantidadeNotif, long tempoExecMs) {
         try {
+            // Horário atual em Brasília (UTC-3)
+            ZoneId zoneIdBrasilia = ZoneId.of("America/Sao_Paulo");
+            LocalTime agora = LocalTime.now(zoneIdBrasilia);
+            LocalTime proximaExec = agora.plusMinutes(5);
+
             JobExecucao execucao = JobExecucao.builder()
                     .nomeJob(nomeJob)
                     .status(status)
-                    .mensagem(mensagem)
                     .quantidadeNotif(quantidadeNotif)
-                    .tempoExecMs(tempoExecMs)
+                    .executadoEm(agora)
+                    .proximaExec(proximaExec)
                     .build();
 
             jobExecucaoRepository.save(execucao);
-            log.info("✅ Execução registrada: {} ({}) - {} ms", nomeJob, status, tempoExecMs);
+            log.info("✅ Execução registrada: {} ({}) às {} - Próxima: {}", nomeJob, status, agora, proximaExec);
 
         } catch (Exception e) {
             log.error("❌ Erro ao registrar execução do job: {}", e.getMessage());
