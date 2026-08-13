@@ -41,10 +41,13 @@ spring:
       max-request-size: 100MB
 
   mail:
-    host: ${MAIL_HOST}
-    port: ${MAIL_PORT}
-    username: ${MAIL_USER}
-    password: ${MAIL_PASS}
+    # Valores padrão vazios: sem eles a aplicação nem sobe quando as
+    # variáveis não estão definidas. Sem credenciais o envio de e-mail
+    # falha, mas o resto da API funciona normalmente.
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USER:}
+    password: ${MAIL_PASS:}
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
