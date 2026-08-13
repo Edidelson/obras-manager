@@ -1,9 +1,12 @@
-databases:
-  - name: obramanager-db
-    plan: free
-    databaseName: obramanager
-    user: obramanager
-    region: oregon
+# ============================================================
+# Banco de dados: migrado para o Neon (Postgres serverless).
+# As credenciais são definidas manualmente no dashboard do Render
+# (Environment), por isso os envVars de banco usam `sync: false`.
+#
+# O banco antigo do Render (obramanager-db) foi removido deste
+# blueprint. Ele NÃO é excluído automaticamente — apague pelo
+# dashboard só depois de confirmar que o Neon está funcionando.
+# ============================================================
 
 services:
   - type: web
@@ -17,26 +20,19 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      # ── Neon (definir os valores no dashboard do Render) ──
+      # DB_HOST: usar o endpoint DIRETO (sem o sufixo "-pooler"),
+      # ex.: ep-xxxx-123456.us-east-2.aws.neon.tech
       - key: DB_HOST
-        fromDatabase:
-          name: obramanager-db
-          property: host
+        sync: false
       - key: DB_PORT
-        fromDatabase:
-          name: obramanager-db
-          property: port
+        value: 5432
       - key: DB_NAME
-        fromDatabase:
-          name: obramanager-db
-          property: database
+        sync: false
       - key: DB_USER
-        fromDatabase:
-          name: obramanager-db
-          property: user
+        sync: false
       - key: DB_PASS
-        fromDatabase:
-          name: obramanager-db
-          property: password
+        sync: false
       - key: DB_SSLMODE
         value: require
       - key: JWT_SECRET
