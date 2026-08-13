@@ -22,6 +22,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @EnableScheduling
@@ -34,6 +35,12 @@ public class NotificacaoJob {
     private final NotificacaoRepository notificacaoRepository;
     private final JobExecucaoRepository jobExecucaoRepository;
     private final EmailService emailService;
+
+    /** Horário fixo (cron) de cada job — usado para calcular proxima_exec. */
+    private static final Map<String, LocalTime> HORARIOS_JOB = Map.of(
+            "verificarNotificacoes8h",  LocalTime.of(8, 0),
+            "verificarNotificacoes16h", LocalTime.of(16, 0)
+    );
 
     /**
      * Verifica às 8h da manhã
@@ -238,23 +245,27 @@ public class NotificacaoJob {
         log.info("📢 Notificação criada: Valor excedido - {}", obra.getNome());
     }
 
+    /**
+     * Atualiza a linha única do job (não cria histórico).
+     * Apenas executado_em, proxima_exec, status e quantidade_notif mudam.
+     */
     private void registrarExecucao(String nomeJob, String status, String mensagem, int quantidadeNotif, long tempoExecMs) {
         try {
             // Horário atual em Brasília (UTC-3)
             ZoneId zoneIdBrasilia = ZoneId.of("America/Sao_Paulo");
             LocalTime agora = LocalTime.now(zoneIdBrasilia);
-            LocalTime proximaExec = agora.plusMinutes(5);
+            LocalTime proximaExec = HORARIOS_JOB.getOrDefault(nomeJob, agora);
 
-            JobExecucao execucao = JobExecucao.builder()
-                    .nomeJob(nomeJob)
-                    .status(status)
-                    .quantidadeNotif(quantidadeNotif)
-                    .executadoEm(agora)
-                    .proximaExec(proximaExec)
-                    .build();
+            JobExecucao execucao = jobExecucaoRepository.findByNomeJob(nomeJob)
+                    .orElseGet(() -> JobExecucao.builder().nomeJob(nomeJob).build());
+
+            execucao.setStatus(status);
+            execucao.setQuantidadeNotif(quantidadeNotif);
+            execucao.setExecutadoEm(agora);
+            execucao.setProximaExec(proximaExec);
 
             jobExecucaoRepository.save(execucao);
-            log.info("✅ Execução registrada: {} ({}) às {} - Próxima: {}", nomeJob, status, agora, proximaExec);
+            log.info("✅ Execução atualizada: {} ({}) às {} - Próxima: {}", nomeJob, status, agora, proximaExec);
 
         } catch (Exception e) {
             log.error("❌ Erro ao registrar execução do job: {}", e.getMessage());

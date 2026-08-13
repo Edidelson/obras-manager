@@ -10,22 +10,21 @@ import java.time.temporal.ChronoUnit;
 @Entity
 @Table(name = "job_execucoes")
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
-@IdClass(JobExecucaoPK.class)
 public class JobExecucao {
 
+    /** Chave primária: existe apenas UMA linha por job. */
     @Id
-    @Column(nullable = false, length = 100)
+    @Column(name = "nome_job", nullable = false, length = 100)
     private String nomeJob;
 
     @Column(nullable = false, length = 20)
-    private String status; // SUCESSO, ERRO
+    private String status; // SUCESSO, ERRO, PENDENTE
 
-    @Column(nullable = false)
+    @Column(name = "quantidade_notif", nullable = false)
     @Builder.Default
     private Integer quantidadeNotif = 0;
 
-    @Id
-    @Column(name = "executado_em", updatable = false)
+    @Column(name = "executado_em")
     @JsonFormat(pattern = "HH:mm:ss")
     private LocalTime executadoEm;
 
@@ -34,12 +33,12 @@ public class JobExecucao {
     private LocalTime proximaExec;
 
     @PrePersist
-    void prePersist() {
-        if (executadoEm == null) {
-            executadoEm = LocalTime.now();
-        }
+    @PreUpdate
+    void normalizarHorarios() {
         // Trunca para segundos apenas (remove milissegundos/nanosegundos)
-        executadoEm = executadoEm.truncatedTo(ChronoUnit.SECONDS);
+        if (executadoEm != null) {
+            executadoEm = executadoEm.truncatedTo(ChronoUnit.SECONDS);
+        }
         if (proximaExec != null) {
             proximaExec = proximaExec.truncatedTo(ChronoUnit.SECONDS);
         }

@@ -24,19 +24,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // O app SEMPRE abre na tela de login: ao iniciar, qualquer sessão salva de
+  // uma execução anterior é descartada. O token continua no AsyncStorage
+  // durante o uso (o interceptor do axios lê de lá), mas não sobrevive ao
+  // fechamento do app.
   useEffect(() => {
-    async function loadStoredData() {
-      const [storedToken, storedUser] = await AsyncStorage.multiGet([
-        '@obra:token',
-        '@obra:user',
-      ]);
-      if (storedToken[1] && storedUser[1]) {
-        setToken(storedToken[1]);
-        setUser(JSON.parse(storedUser[1]));
-      }
+    async function limparSessaoAnterior() {
+      await AsyncStorage.multiRemove(['@obra:token', '@obra:refresh', '@obra:user']);
+      setToken(null);
+      setUser(null);
       setLoading(false);
     }
-    loadStoredData();
+    limparSessaoAnterior();
   }, []);
 
   async function login(email: string, senha: string) {
