@@ -45,7 +45,7 @@ public class NotificacaoJob {
     /**
      * Verifica às 8h da manhã
      */
-    @Scheduled(cron = "0 0 8 * * *")
+    @Scheduled(cron = "0 0 8 * * *", zone = "America/Sao_Paulo")
     public void verificarNotificacoes8h() {
         long inicio = System.currentTimeMillis();
         int notificacoes = 0;
@@ -72,7 +72,7 @@ public class NotificacaoJob {
     /**
      * Verifica às 16h (4 da tarde)
      */
-    @Scheduled(cron = "0 0 16 * * *")
+    @Scheduled(cron = "0 0 16 * * *", zone = "America/Sao_Paulo")
     public void verificarNotificacoes16h() {
         long inicio = System.currentTimeMillis();
         int notificacoes = 0;
