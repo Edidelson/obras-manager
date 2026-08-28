@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Automático: Dev (emulador) usa localhost, Release (produção) usa Render
@@ -6,9 +7,15 @@ const BASE_URL = __DEV__
   ? 'http://10.0.2.2:8080/api'
   : 'https://obramanager-api.onrender.com/api';
 
+// A API roda no plano free do Render, que suspende o servico apos ~15 min sem
+// trafego. Acordar leva de 50s a 2min (cold start do Render + do Neon), entao o
+// timeout precisa cobrir isso: com 15s toda primeira requisicao depois de um
+// periodo parado estourava antes de o servidor responder.
+const TIMEOUT_MS = 90000;
+
 export const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,
+  timeout: TIMEOUT_MS,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -19,18 +26,44 @@ api.interceptors.request.use(async config => {
   return config;
 });
 
-// ── Interceptor: trata erro 401 (token expirado/inválido) ──
-// Só limpa o token salvo (pra próxima ação pedir login de novo); não força
+type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+// Erro sem `response` = a requisicao nao chegou a ser respondida (timeout ou
+// falha de rede). So esses valem retry; um 4xx/5xx do servidor nao.
+const isRetryable = (error: AxiosError) =>
+  !error.response &&
+  (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK');
+
+// ── Interceptor: trata erro 401 (token expirado/inválido) e retry de cold start ──
+// No 401 só limpa o token salvo (pra próxima ação pedir login de novo); não força
 // navegação de volta pro login no meio do que o usuário estiver fazendo.
 api.interceptors.response.use(
   res => res,
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
       await AsyncStorage.multiRemove(['@obra:token', '@obra:refresh']);
+      return Promise.reject(error);
     }
+
+    // Uma unica tentativa extra: se o servidor estava hibernando, a primeira
+    // requisicao pode estourar mesmo com 90s, mas ela ja disparou o cold start
+    // e a segunda costuma passar. `_retry` impede loop infinito.
+    const config = error.config as RetryableConfig | undefined;
+    if (config && !config._retry && isRetryable(error)) {
+      config._retry = true;
+      return api(config);
+    }
+
     return Promise.reject(error);
   },
 );
+
+// ── Warm-up ──
+// Dispara o cold start do servidor sem travar a UI. Chame no boot do app (por
+// exemplo no useEffect inicial do AuthContext), antes de o usuario tentar logar.
+// Falhas sao ignoradas de proposito: isso e best-effort, nao um health check.
+export const warmUp = () =>
+  api.get('/actuator/health').catch(() => undefined);
 
 // ─────────────── Auth ───────────────
 export const authApi = {

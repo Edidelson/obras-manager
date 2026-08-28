@@ -90,10 +90,16 @@ android {
             keyPassword 'android'
         }
         release {
-            storeFile file('my-release-key.keystore')
-            storePassword '123456'
-            keyAlias 'my-key-alias'
-            keyPassword '123456'
+            // Credenciais NAO ficam no repositorio. Defina em ~/.gradle/gradle.properties
+            // (Windows: C:\Users\<seu-usuario>\.gradle\gradle.properties):
+            //   RELEASE_STORE_PASSWORD=...
+            //   RELEASE_KEY_PASSWORD=...
+            //   RELEASE_KEY_ALIAS=my-key-alias
+            // O arquivo .keystore continua em android/app/ e e ignorado pelo git.
+            storeFile file(findProperty('RELEASE_STORE_FILE') ?: 'my-release-key.keystore')
+            storePassword findProperty('RELEASE_STORE_PASSWORD') ?: ''
+            keyAlias findProperty('RELEASE_KEY_ALIAS') ?: ''
+            keyPassword findProperty('RELEASE_KEY_PASSWORD') ?: ''
         }
     }
 
@@ -122,3 +128,18 @@ dependencies {
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
+
+// Falha cedo e com mensagem legivel quando um build de release e pedido sem as
+// credenciais de assinatura, em vez do erro cru de keystore do Android Gradle Plugin.
+gradle.taskGraph.whenReady { graph ->
+    def precisaAssinar = graph.allTasks.any { it.project == project && it.name ==~ /(?i).*(assemble|bundle)Release.*/ }
+    if (precisaAssinar && !project.findProperty('RELEASE_STORE_PASSWORD')) {
+        throw new GradleException(
+            "Credenciais de assinatura ausentes.\n" +
+            "Crie ~/.gradle/gradle.properties (Windows: C:\\Users\\<voce>\\.gradle\\gradle.properties) com:\n" +
+            "  RELEASE_STORE_PASSWORD=<senha do keystore>\n" +
+            "  RELEASE_KEY_PASSWORD=<senha da chave>\n" +
+            "  RELEASE_KEY_ALIAS=my-key-alias"
+        )
+    }
+}
